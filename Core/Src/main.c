@@ -44,7 +44,7 @@ typedef struct {
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 #define BLINK_TIME 125
-#define CLICK_TIME 50
+#define CLICK_TIME 100
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -99,125 +99,56 @@ int main(void)
   lcd = Lcd_create(ports, pins, LCD_RS_GPIO_Port, LCD_RS_Pin, LCD_E_GPIO_Port, LCD_E_Pin, LCD_4_BIT_MODE);
 
   bool isEnterPressed = 0;
-  enum pos {UNITIES = 7, TENTHS = 9, HUNDREDTHS = 10};
-  struct sMass {
-	  uint8_t u;
-	  uint8_t t;
-	  uint8_t h;
-  };
-  struct sMass mass = {1, 5, 0};
+  enum pos {UNITIES = 7, TENTHS = 9, HUNDREDTHS = 10, UNITS = 12};
+  int m = 150;
   int cursor_pos = 0;
   char lcd_infoText[] = "masa = ";
+  char lcd_unitText[] = "[kg]";
   Lcd_cursor(&lcd, 0, cursor_pos);
   Lcd_string(&lcd, lcd_infoText);
   cursor_pos = strlen(lcd_infoText);
   Lcd_cursor(&lcd, 0, cursor_pos);
-  Lcd_int(&lcd, mass.u);
-  cursor_pos++;
+  Lcd_int(&lcd, m/100);
   Lcd_string(&lcd, ".");
-  cursor_pos = TENTHS;
-  Lcd_int(&lcd, mass.t);
-  cursor_pos = HUNDREDTHS;
-  Lcd_int(&lcd, mass.h);
+  Lcd_int(&lcd, m%100);
+  Lcd_cursor(&lcd, 0, UNITS);
+  Lcd_string(&lcd, lcd_unitText);
 
   while (isEnterPressed == false)
   {
-	  if(HAL_GPIO_ReadPin(BUTTON_UP_GPIO_Port, BUTTON_UP_Pin) == GPIO_PIN_SET){
-		  switch (cursor_pos){
-		  case (UNITIES):
-			mass.u++;
-		  	HAL_Delay(CLICK_TIME);
-		  break;
-		  case (TENTHS):
-			mass.t++;
+	  if(HAL_GPIO_ReadPin(BUTTON_UP_GPIO_Port, BUTTON_UP_Pin) == GPIO_PIN_SET && m < 300){
 		  HAL_Delay(CLICK_TIME);
-		  break;
-		  case (HUNDREDTHS):
-			mass.h++;
-		  HAL_Delay(CLICK_TIME);
-		  break;
-		  default:
-			  break;
+		  m++;
+		  Lcd_cursor(&lcd, 0, cursor_pos);
+		  Lcd_int(&lcd, m/100);
+		  Lcd_string(&lcd, ".");
+		  if (m%100 < 10){
+			  Lcd_cursor(&lcd, 0, TENTHS);
+			  Lcd_int(&lcd, 0);
+			  Lcd_cursor(&lcd, 0, HUNDREDTHS);
 		  }
-	  } else if (HAL_GPIO_ReadPin(BUTTON_DOWN_GPIO_Port, BUTTON_DOWN_Pin) == GPIO_PIN_SET) {
-		  switch (cursor_pos){
-		  case (UNITIES):
-			mass.u--;
+		  Lcd_int(&lcd, m%100);
+	  } else if (HAL_GPIO_ReadPin(BUTTON_DOWN_GPIO_Port, BUTTON_DOWN_Pin) == GPIO_PIN_SET && m > 0) {
 		  HAL_Delay(CLICK_TIME);
-		  break;
-		  case (TENTHS):
-			mass.t--;
-		  HAL_Delay(CLICK_TIME);
-		  break;
-		  case (HUNDREDTHS):
-			mass.h--;
-		  HAL_Delay(CLICK_TIME);
-		  break;
-		  default:
-		  break;
+		  m--;
+		  Lcd_cursor(&lcd, 0, cursor_pos);
+		  Lcd_int(&lcd, m/100);
+		  Lcd_string(&lcd, ".");
+		  if (m%100 < 10){
+			  Lcd_cursor(&lcd, 0, TENTHS);
+			  Lcd_int(&lcd, 0);
+			  Lcd_cursor(&lcd, 0, HUNDREDTHS);
 		  }
+		  Lcd_int(&lcd, m%100);
 	  } else if (HAL_GPIO_ReadPin(BUTTON_LEFT_GPIO_Port, BUTTON_LEFT_Pin) == GPIO_PIN_SET){
-		  switch (cursor_pos){
-		  case (UNITIES):
-				  cursor_pos = HUNDREDTHS;
-		  HAL_Delay(CLICK_TIME);
-		  break;
-		  case (TENTHS):
-				  cursor_pos = UNITIES;
-		  HAL_Delay(CLICK_TIME);
-		  break;
-		  case (HUNDREDTHS):
-				  cursor_pos = TENTHS;
-		  HAL_Delay(CLICK_TIME);
-		  default:
-			  break;
-		  }
-	  } else if (HAL_GPIO_ReadPin(BUTTON_RIGHT_GPIO_Port, BUTTON_RIGHT_Pin) == GPIO_PIN_SET){
-		  switch (cursor_pos){
-		  case (UNITIES):
-		  cursor_pos = TENTHS;
-		  HAL_Delay(CLICK_TIME);
-		  break;
-		  case (TENTHS):
-		  cursor_pos = HUNDREDTHS;
-		  HAL_Delay(CLICK_TIME);
-		  break;
-		  case (HUNDREDTHS):
-		  cursor_pos = UNITIES;
-		  HAL_Delay(CLICK_TIME);
-		  default:
-		  break;
-		  }
-	  }
-	  switch (cursor_pos){
-	  case (UNITIES):
-		  Lcd_cursor(&lcd, 0, cursor_pos);
-	  	  Lcd_string(&lcd, " ");
-	  	  HAL_Delay(BLINK_TIME);
-	  	  Lcd_cursor(&lcd, 0, cursor_pos);
-	  	  Lcd_int(&lcd, mass.u);
-	  	  HAL_Delay(BLINK_TIME);
-	  	  break;
-	  case (TENTHS):
-		  Lcd_cursor(&lcd, 0, cursor_pos);
-	  	  Lcd_string(&lcd, " ");
-	  	  HAL_Delay(BLINK_TIME);
-	  	  Lcd_cursor(&lcd, 0, cursor_pos);
-	  	  Lcd_int(&lcd, mass.t);
-	  	  HAL_Delay(BLINK_TIME);
-	  	  break;
-	  case (HUNDREDTHS):
-		  Lcd_cursor(&lcd, 0, cursor_pos);
-	  	  Lcd_string(&lcd, " ");
-	  	  HAL_Delay(BLINK_TIME);
-	  	  Lcd_cursor(&lcd, 0, cursor_pos);
-	  	  Lcd_int(&lcd, mass.h);
-	  	  HAL_Delay(BLINK_TIME);
-	      break;
-	  default:
-		  break;
-	  }
 
+	  } else if (HAL_GPIO_ReadPin(BUTTON_RIGHT_GPIO_Port, BUTTON_RIGHT_Pin) == GPIO_PIN_SET){
+
+	  } else if (HAL_GPIO_ReadPin(BUTTON_ENTER_GPIO_Port, BUTTON_ENTER_Pin) == GPIO_PIN_SET){
+		  isEnterPressed = true;
+		  while(HAL_GPIO_ReadPin(BUTTON_ENTER_GPIO_Port, BUTTON_ENTER_Pin) == GPIO_PIN_SET)
+		  {}
+	  }
   }
   /* USER CODE END 2 */
 
@@ -225,16 +156,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  /*if(HAL_GPIO_ReadPin(BUTTON_UP_GPIO_Port, BUTTON_UP_Pin) == GPIO_PIN_SET){
-		  m++;
-		  cursor_pos = strlen(lcd_infoText);
-		  Lcd_cursor(&lcd, 0, cursor_pos);
-		  Lcd_int(&lcd, m/100);
-		  cursor_pos++;
-		  Lcd_string(&lcd, ".");
-		  cursor_pos++;
-		  Lcd_int(&lcd, m % 100);
-	  }*/
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
